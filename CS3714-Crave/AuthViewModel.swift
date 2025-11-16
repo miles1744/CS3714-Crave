@@ -38,15 +38,17 @@ final class AuthViewModel: ObservableObject {
 
     // MARK: - Auth actions
 
-    func signUp(email: String, password: String, displayName: String?) async {
-        loading = true; errorMessage = nil
+    func signUp(email: String, password: String, displayName: String?, userType: String) async {
+        loading = true
+        errorMessage = nil
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             // Create Firestore user doc
             try await db.collection("users").document(result.user.uid).setData([
                 "uid": result.user.uid,
                 "email": email,
-                "displayName": displayName as Any
+                "displayName": displayName as Any,
+                "userType": userType
             ], merge: true)
             try? await result.user.sendEmailVerification()
             await pullUserProfile(uid: result.user.uid)

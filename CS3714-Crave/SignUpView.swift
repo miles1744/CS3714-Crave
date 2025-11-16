@@ -12,6 +12,10 @@ struct SignUpView: View {
     @State private var displayName = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var userType = "General User"
+    
+    let userTypes = ["General User", "Chef"]
+    
 
     var body: some View {
         VStack(spacing: 16) {
@@ -20,18 +24,26 @@ struct SignUpView: View {
 
             TextField("Display Name (optional)", text: $displayName)
                 .textFieldStyle(.roundedBorder)
+                .autocapitalization(.none)
 
             TextField("Email", text: $email)
-                .textInputAutocapitalization(.never)
+                .autocapitalization(.none)
                 .keyboardType(.emailAddress)
                 .autocorrectionDisabled()
                 .textFieldStyle(.roundedBorder)
 
             SecureField("Password (min 6)", text: $password)
                 .textFieldStyle(.roundedBorder)
+            
+            Picker("Select Account Type", selection: $userType) {
+                ForEach(userTypes, id: \.self) { type in
+                    Text(type).tag(type)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
 
             Button {
-                Task { await auth.signUp(email: email, password: password, displayName: displayName.isEmpty ? nil : displayName) }
+                Task { await auth.signUp(email: email, password: password, displayName: displayName.isEmpty ? nil : displayName, userType: userType) }
             } label: {
                 HStack {
                     if auth.loading { ProgressView() }

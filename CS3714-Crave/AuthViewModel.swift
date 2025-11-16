@@ -81,14 +81,16 @@ final class AuthViewModel: ObservableObject {
             guard let data = snap.data() else { return }
             let email = (data["email"] as? String) ?? ""
             let name  = data["displayName"] as? String
+            let userType = data["userType"] as? String ?? "General User"
 
             // Upsert in SwiftData
             let descriptor = FetchDescriptor<UserProfile>(predicate: #Predicate { $0.uid == uid })
             if let existing = try? context.fetch(descriptor).first {
                 existing.email = email
                 existing.displayName = name
+                existing.userType = userType
             } else {
-                context.insert(UserProfile(uid: uid, email: email, displayName: name))
+                context.insert(UserProfile(uid: uid, email: email, displayName: name, userType: userType))
             }
             try? context.save()
         } catch {

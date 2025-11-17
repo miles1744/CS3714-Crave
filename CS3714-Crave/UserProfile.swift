@@ -13,11 +13,13 @@ final class UserProfile {
     @Attribute(.unique) var uid: String
     var email: String
     var displayName: String?
+    var userType: String
 
-    init(uid: String, email: String, displayName: String? = nil) {
+    init(uid: String, email: String, displayName: String? = nil, userType: String) {
         self.uid = uid
         self.email = email
         self.displayName = displayName
+        self.userType = userType
     }
 }
 
@@ -26,4 +28,5 @@ struct FirestoreUser: Codable {
     let uid: String
     let email: String
     let displayName: String?
+    let userType: String
 }

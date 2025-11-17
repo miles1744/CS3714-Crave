@@ -13,9 +13,14 @@ final class UserProfile {
     @Attribute(.unique) var uid: String
     var email: String
     var displayName: String?
-    var userType: String
+    var userType: String          // "General User" or "Chef"
 
-    init(uid: String, email: String, displayName: String? = nil, userType: String) {
+    init(
+        uid: String,
+        email: String,
+        displayName: String? = nil,
+        userType: String = "General User"
+    ) {
         self.uid = uid
         self.email = email
         self.displayName = displayName
@@ -23,10 +28,10 @@ final class UserProfile {
     }
 }
 
-// Mirror of Firestore data for decoding/encoding if needed
+// Optional mirror of Firestore data
 struct FirestoreUser: Codable {
     let uid: String
     let email: String
     let displayName: String?
-    let userType: String
+    let userType: String?
 }

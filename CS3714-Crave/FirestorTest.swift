@@ -1,25 +1,24 @@
 //
-//  FirestorTest.swift
+//  DemoAuth.swift
 //  CS3714-Crave
 //
 //  Created by Brendan Michael Riordan on 11/9/25.
 //
 
-//import FirebaseFirestore
 //import FirebaseAuth
 //
-//func demoWriteRead() {
-//    let db = Firestore.firestore()
-//    let uid = Auth.auth().currentUser?.uid ?? "anon"
-//    let docRef = db.collection("users").document(uid)
-//
+//func demoAuth() {
 //    Task {
 //        do {
-//            try await docRef.setData(["uid": uid, "email": "test@example.com", "createdAt": Date()])
-//            let snap = try await docRef.getDocument()
-//            print("Doc data:", snap.data() ?? [:])
+//            // Sign up (use a fresh email once)
+//            let result = try await Auth.auth().createUser(withEmail: "test@example.com", password: "password123")
+//            print("Created user:", result.user.uid)
+//
+//            // Or sign in (subsequent runs)
+//            // let result = try await Auth.auth().signIn(withEmail: "test@example.com", password: "password123")
+//            // print("Signed in:", result.user.uid)
 //        } catch {
-//            print("Firestore error:", error.localizedDescription)
+//            print("Auth error:", error.localizedDescription)
 //        }
 //    }
 //}

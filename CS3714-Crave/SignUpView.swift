@@ -12,10 +12,7 @@ struct SignUpView: View {
     @State private var displayName = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var userType = "General User"
-    
-    let userTypes = ["General User", "Chef"]
-    
+    @State private var userType = "user"   // 👈 internal value
 
     var body: some View {
         VStack(spacing: 16) {
@@ -34,16 +31,23 @@ struct SignUpView: View {
 
             SecureField("Password (min 6)", text: $password)
                 .textFieldStyle(.roundedBorder)
-            
+
+            // ✅ Use labels, but tags are "user" / "chef"
             Picker("Select Account Type", selection: $userType) {
-                ForEach(userTypes, id: \.self) { type in
-                    Text(type).tag(type)
-                }
+                Text("General User").tag("user")
+                Text("Chef").tag("chef")
             }
             .pickerStyle(SegmentedPickerStyle())
 
             Button {
-                Task { await auth.signUp(email: email, password: password, displayName: displayName.isEmpty ? nil : displayName, userType: userType) }
+                Task {
+                    await auth.signUp(
+                        email: email,
+                        password: password,
+                        displayName: displayName.isEmpty ? nil : displayName,
+                        userType: userType          // "user" or "chef"
+                    )
+                }
             } label: {
                 HStack {
                     if auth.loading { ProgressView() }
@@ -55,7 +59,10 @@ struct SignUpView: View {
             .disabled(email.isEmpty || password.count < 6)
 
             if let err = auth.errorMessage {
-                Text(err).foregroundStyle(.red).font(.footnote).multilineTextAlignment(.center)
+                Text(err)
+                    .foregroundStyle(.red)
+                    .font(.footnote)
+                    .multilineTextAlignment(.center)
             }
 
             Spacer()
@@ -63,4 +70,5 @@ struct SignUpView: View {
         .padding()
     }
 }
+
 

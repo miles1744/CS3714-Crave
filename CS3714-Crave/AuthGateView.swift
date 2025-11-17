@@ -10,19 +10,21 @@ import SwiftData
 
 struct AuthGateView: View {
     @EnvironmentObject var auth: AuthViewModel
-    @Query(sort: \UserProfile.email) private var profiles: [UserProfile]
 
     var body: some View {
         Group {
             if auth.isAuthenticated {
-                HomeView(profile: profiles.first)
+                if auth.currentProfile != nil {
+                    HomeView()   // ✅ correct
+                } else {
+                    ProgressView("Loading profile...")
+                }
             } else {
                 AuthTabsView()
             }
         }
     }
 }
-
 struct AuthTabsView: View {
     var body: some View {
         TabView {

@@ -12,7 +12,11 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @FocusState private var focused: Field?
-    enum Field { case email, password }
+
+    enum Field {
+        case email
+        case password
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -25,10 +29,12 @@ struct LoginView: View {
                 .autocorrectionDisabled()
                 .textFieldStyle(.roundedBorder)
                 .focused($focused, equals: .email)
+                .submitLabel(.next)
 
             SecureField("Password", text: $password)
                 .textFieldStyle(.roundedBorder)
                 .focused($focused, equals: .password)
+                .submitLabel(.go)
 
             Button {
                 Task { await auth.signIn(email: email, password: password) }
@@ -43,15 +49,29 @@ struct LoginView: View {
             .disabled(email.isEmpty || password.count < 6)
 
             if let err = auth.errorMessage {
-                Text(err).foregroundStyle(.red).font(.footnote).multilineTextAlignment(.center)
+                Text(err)
+                    .foregroundStyle(.red)
+                    .font(.footnote)
+                    .multilineTextAlignment(.center)
             }
 
             Spacer()
         }
         .padding()
+        // 👉 Force initial focus on email when the screen appears
+        .onAppear {
+            focused = .email
+        }
+        // Handle return key
         .onSubmit {
-            if focused == .email { focused = .password }
-            else { Task { await auth.signIn(email: email, password: password) } }
+            switch focused {
+            case .email:
+                focused = .password
+            case .password:
+                Task { await auth.signIn(email: email, password: password) }
+            case .none:
+                break
+            }
         }
     }
 }

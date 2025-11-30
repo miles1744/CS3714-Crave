@@ -23,7 +23,7 @@ struct CraveView: View {
 
                         HStack {
                             TextField("e.g. pasta, burgers, vegan...", text: $vm.query)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .textFieldStyle(.roundedBorder)
                                 .submitLabel(.search)
                                 .onSubmit {
                                     Task { await vm.search() }
@@ -49,7 +49,7 @@ struct CraveView: View {
 
                     Divider()
 
-                    // MARK: - AI Recipe Lookup (space for Gemini/OpenAI)
+                    // MARK: - AI Recipe Lookup
                     VStack(alignment: .leading, spacing: 12) {
                         Text("AI Recipe Lookup")
                             .font(.title2.bold())
@@ -59,7 +59,7 @@ struct CraveView: View {
                             .foregroundStyle(.secondary)
 
                         TextField("Ask AI… e.g. “healthy chicken dinner”", text: $aiPrompt)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .textFieldStyle(.roundedBorder)
 
                         Button("Generate with AI") {
                             Task {
@@ -136,7 +136,7 @@ struct CraveView: View {
             }
             .navigationTitle("Crave")
             .task {
-                // Optional: auto-load something on first open
+                // Auto-load something on first open
                 if vm.recipes.isEmpty {
                     vm.query = "pasta"
                     await vm.search()
@@ -145,24 +145,20 @@ struct CraveView: View {
         }
     }
 
-    // MARK: - Placeholder AI function (replace with Gemini/OpenAI)
+    // MARK: - AI integration (Gemini)
     func generateAIRecipe(from prompt: String) async -> String {
-        guard !prompt.trimmingCharacters(in: .whitespaces).isEmpty else {
+        let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
             return "Please enter a prompt for the AI."
         }
 
-        // TODO: replace this with a real call:
-        // try await GeminiAPI.shared.generateRecipe(prompt: "...")
-
-        return """
-        Here's a sample AI idea for: \(prompt)
-
-        • Protein: Chicken breast
-        • Base: Roasted vegetables
-        • Sauce: Garlic herb yogurt
-        • Extras: Fresh herbs + lemon
-
-        Replace this text once your real AI integration is ready.
-        """
+        do {
+            // Uses your GeminiAPI helper
+            return try await GeminiAPI.shared.generateRecipe(
+                prompt: "Generate a detailed recipe for: \(trimmed)"
+            )
+        } catch {
+            return "AI error: \(error.localizedDescription)"
+        }
     }
 }

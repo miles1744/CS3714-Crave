@@ -5,16 +5,16 @@
 //  Created by Brendan Michael Riordan on 11/9/25.
 //
 
-
 import SwiftUI
 import SwiftData
 
 struct HomeView: View {
     @EnvironmentObject var auth: AuthViewModel
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \SavedRecipe.title) private var savedRecipes: [SavedRecipe]
+
     @State private var newName: String = ""
     @State private var selectedTab: Tab = .home
-    @Environment(\.modelContext) private var modelContext
 
     enum Tab {
         case home
@@ -36,135 +36,159 @@ struct HomeView: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
+        NavigationStack {
+            VStack(spacing: 12) {
 
-            // HEADER BAR
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    headerButton("Home", tab: .home)
-                    headerButton("Crave", tab: .crave)
+                // HEADER BAR
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        headerButton("Home", tab: .home)
+                        headerButton("Crave", tab: .crave)
 
-                    if isChef {
-                        // Chef-only tabs
-                        headerButton("Add Recipe", tab: .addRecipe)
-                        headerButton("My Recipes", tab: .myRecipes)
-                    } else {
-                        // General user tabs
-                        headerButton("Saved Recipes", tab: .saved)
-                        headerButton("Preferences", tab: .preferences)
+                        if isChef {
+                            // Chef-only tabs
+                            headerButton("Add Recipe", tab: .addRecipe)
+                            headerButton("My Recipes", tab: .myRecipes)
+                        } else {
+                            // General user tabs
+                            headerButton("Saved Recipes", tab: .saved)
+                            headerButton("Preferences", tab: .preferences)
+                        }
                     }
+                    .padding(.vertical, 8)
                 }
-                .padding(.vertical, 8)
-            }
 
-            Divider()
+                Divider()
 
-            // MAIN CONTENT AREA – changes by selectedTab
-            switch selectedTab {
-            case .home:
-                homeContent
+                // MAIN CONTENT AREA – changes by selectedTab
+                switch selectedTab {
+                case .home:
+                    homeContent
 
-            case .crave:
-                // 🔥 This is where your Spoonacular + AI CraveView lives
-                CraveView()
-                    .frame(maxWidth: .infinity,
-                           maxHeight: .infinity,
-                           alignment: .topLeading)
+                case .crave:
+                    CraveView()
+                        .frame(maxWidth: .infinity,
+                               maxHeight: .infinity,
+                               alignment: .topLeading)
 
-            case .saved:
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Saved Recipes")
-                        .font(.title.bold())
+                case .saved:
+                    savedContent
 
-                    if savedRecipes.isEmpty {
-                        Text("You haven’t saved any recipes yet.")
+                case .preferences:
+                    VStack(spacing: 8) {
+                        Text("Preferences")
+                            .font(.title.bold())
+                        Text("Customize your experience: email type, dietary preferences, and more.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                    } else {
-                        List {
-                            ForEach(savedRecipes) { recipe in
-                                HStack(spacing: 12) {
-                                    if let urlString = recipe.imageURL,
-                                       let url = URL(string: urlString) {
-                                        AsyncImage(url: url) { image in
-                                            image
-                                                .resizable()
-                                                .scaledToFill()
-                                        } placeholder: {
-                                            ProgressView()
-                                        }
-                                        .frame(width: 60, height: 60)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                                    }
-
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(recipe.title)
-                                            .font(.headline)
-
-                                        HStack(spacing: 8) {
-                                            if let minutes = recipe.readyInMinutes {
-                                                Text("\(minutes) min")
-                                            }
-                                            if let servings = recipe.servings {
-                                                Text("Serves \(servings)")
-                                            }
-                                        }
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            }
-                            .onDelete { indexSet in
-                                for index in indexSet {
-                                    modelContext.delete(savedRecipes[index])
-                                }
-                            }
-                        }
-                        .listStyle(.plain)
+                            .multilineTextAlignment(.center)
                     }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            case .preferences:
-                VStack(spacing: 8) {
-                    Text("Preferences")
-                        .font(.title.bold())
-                    Text("Customize your experience: email type, dietary preferences, and more.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-            case .addRecipe:
-                VStack(spacing: 8) {
-                    Text("Add Recipe")
-                        .font(.title.bold())
-                    Text("As a chef, you can create new recipes to share with users here.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                case .addRecipe:
+                    VStack(spacing: 8) {
+                        Text("Add Recipe")
+                            .font(.title.bold())
+                        Text("As a chef, you can create new recipes to share with users here.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-            case .myRecipes:
-                VStack(spacing: 8) {
-                    Text("My Recipes")
-                        .font(.title.bold())
-                    Text("Manage and edit all the recipes you’ve created.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                case .myRecipes:
+                    VStack(spacing: 8) {
+                        Text("My Recipes")
+                            .font(.title.bold())
+                        Text("Manage and edit all the recipes you’ve created.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                Spacer()
             }
-
-            Spacer()
+            .padding()
+            .navigationTitle("Home")
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .padding()
     }
 
-    // MARK: - Subviews
+    // MARK: - Saved Recipes Content
+
+    private var savedContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Saved Recipes")
+                .font(.title.bold())
+
+            if savedRecipes.isEmpty {
+                Text("You haven’t saved any recipes yet.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                List {
+                    ForEach(savedRecipes) { saved in
+                        NavigationLink {
+                            // open full detail view with AI + instructions
+                            RecipeDetailView(recipe: Recipe(from: saved))
+                        } label: {
+                            HStack(spacing: 12) {
+                                if let urlString = saved.imageURL,
+                                   let url = URL(string: urlString) {
+                                    AsyncImage(url: url) { image in
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                    } placeholder: {
+                                        ProgressView()
+                                    }
+                                    .frame(width: 70, height: 70)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(saved.title)
+                                        .font(.headline)
+
+                                    HStack(spacing: 8) {
+                                        if let minutes = saved.readyInMinutes {
+                                            Text("\(minutes) min")
+                                        }
+                                        if let servings = saved.servings {
+                                            Text("Serves \(servings)")
+                                        }
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        // Swipe left to remove
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                removeSaved(saved)
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+                .listStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    // MARK: - Helpers
+
+    private func removeSaved(_ recipe: SavedRecipe) {
+        modelContext.delete(recipe)
+        // If you later use persistent storage, you can also:
+        // try? modelContext.save()
+    }
 
     private func headerButton(_ title: String, tab: Tab) -> some View {
         Button {
@@ -197,7 +221,6 @@ struct HomeView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
 
-                    // Quick actions for chefs
                     HStack {
                         Button {
                             selectedTab = .addRecipe

@@ -98,47 +98,52 @@ struct CraveView: View {
                                 .foregroundStyle(.secondary)
                         } else {
                             ForEach(vm.recipes) { recipe in
-                                HStack(spacing: 12) {
-                                    if let urlString = recipe.image,
-                                       let url = URL(string: urlString) {
-                                        AsyncImage(url: url) { image in
-                                            image
-                                                .resizable()
-                                                .scaledToFill()
-                                        } placeholder: {
-                                            ProgressView()
-                                        }
-                                        .frame(width: 70, height: 70)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                                    }
-
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(recipe.title)
-                                            .font(.headline)
-
-                                        HStack(spacing: 8) {
-                                            if let minutes = recipe.readyInMinutes {
-                                                Text("\(minutes) min")
+                                NavigationLink {
+                                    RecipeDetailView(recipe: recipe)
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        if let urlString = recipe.image,
+                                           let url = URL(string: urlString) {
+                                            AsyncImage(url: url) { image in
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                            } placeholder: {
+                                                ProgressView()
                                             }
-                                            if let servings = recipe.servings {
-                                                Text("Serves \(servings)")
-                                            }
+                                            .frame(width: 70, height: 70)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
                                         }
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                    }
 
-                                    Spacer()
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(recipe.title)
+                                                .font(.headline)
 
-                                    Button {
-                                        save(recipe)
-                                    } label: {
-                                        Image(systemName: "bookmark.fill")
-                                            .foregroundColor(.blue)
+                                            HStack(spacing: 8) {
+                                                if let minutes = recipe.readyInMinutes {
+                                                    Text("\(minutes) min")
+                                                }
+                                                if let servings = recipe.servings {
+                                                    Text("Serves \(servings)")
+                                                }
+                                            }
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                        }
+
+                                        Spacer()
+
+                                        Button {
+                                            save(recipe)
+                                        } label: {
+                                            Image(systemName: "bookmark.fill")
+                                                .foregroundColor(.blue)
+                                        }
+                                        .buttonStyle(.borderless)
                                     }
-                                    .buttonStyle(.borderless)
-                                }
-                                .padding(.vertical, 4)
+                                    .padding(.vertical, 4)
+                                
+                            }
                             }
                         }
                     }
@@ -160,22 +165,26 @@ struct CraveView: View {
     // MARK: - Saving
 
     private func save(_ recipe: Recipe) {
+        let recipeID = recipe.id   // capture value first
+
         // Avoid duplicates
         let descriptor = FetchDescriptor<SavedRecipe>(
-            predicate: #Predicate { $0.id == recipe.id }
+            predicate: #Predicate<SavedRecipe> { saved in
+                saved.id == recipeID
+            }
         )
 
         if let existing = try? modelContext.fetch(descriptor),
            existing.isEmpty == false {
-            // already saved – you could show a toast later
+            // Already saved – nothing to do
             return
         }
 
         let saved = SavedRecipe(from: recipe)
         modelContext.insert(saved)
-        // If you ever switch off in-memory SwiftData, you can manually save here.
-        // try? modelContext.save()
+        // If you use persistent storage later, you can also: try? modelContext.save()
     }
+    
 
     // MARK: - AI integration (Gemini)
 

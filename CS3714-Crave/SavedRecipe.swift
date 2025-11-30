@@ -8,23 +8,35 @@ import SwiftData
 
 @Model
 class SavedRecipe {
-    // Use Spoonacular ID as primary key
     @Attribute(.unique) var id: Int
     var title: String
     var imageURL: String?
     var readyInMinutes: Int?
     var servings: Int?
 
-    init(id: Int,
-         title: String,
-         imageURL: String? = nil,
-         readyInMinutes: Int? = nil,
-         servings: Int? = nil) {
+    // New fields so detail view works for saved recipes too
+    var summary: String?
+    var instructions: String?
+    var sourceUrl: String?
+
+    init(
+        id: Int,
+        title: String,
+        imageURL: String? = nil,
+        readyInMinutes: Int? = nil,
+        servings: Int? = nil,
+        summary: String? = nil,
+        instructions: String? = nil,
+        sourceUrl: String? = nil
+    ) {
         self.id = id
         self.title = title
         self.imageURL = imageURL
         self.readyInMinutes = readyInMinutes
         self.servings = servings
+        self.summary = summary
+        self.instructions = instructions
+        self.sourceUrl = sourceUrl
     }
 
     convenience init(from recipe: Recipe) {
@@ -33,7 +45,10 @@ class SavedRecipe {
             title: recipe.title,
             imageURL: recipe.image,
             readyInMinutes: recipe.readyInMinutes,
-            servings: recipe.servings
+            servings: recipe.servings,
+            summary: recipe.summary,
+            instructions: recipe.instructions,
+            sourceUrl: recipe.sourceUrl
         )
     }
 }

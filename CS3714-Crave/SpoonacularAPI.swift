@@ -47,8 +47,46 @@ struct SpoonacularAPI {
             URLQueryItem(name: "number", value: "20")
         ]
 
+        // Free-text query from CraveView
         if let q = query, !q.trimmingCharacters(in: .whitespaces).isEmpty {
             items.append(URLQueryItem(name: "query", value: q))
+        }
+
+        // 🔥 Apply user food preferences from UserDefaults (set in FoodPreferencesView)
+        let defaults = UserDefaults.standard
+
+        // Diet (e.g. vegetarian, vegan, gluten free)
+        if let diet = defaults.string(forKey: "dietPref"),
+           !diet.isEmpty,
+           diet != "None" {
+            items.append(
+                URLQueryItem(
+                    name: "diet",
+                    value: diet.lowercased()   // Spoonacular expects lowercase
+                )
+            )
+        }
+
+        // Intolerances (comma-separated string, e.g. "Dairy,Gluten")
+        if let intolerances = defaults.string(forKey: "intolerancesPref"),
+           !intolerances.trimmingCharacters(in: .whitespaces).isEmpty {
+            items.append(
+                URLQueryItem(
+                    name: "intolerances",
+                    value: intolerances
+                )
+            )
+        }
+
+        // Excluded ingredients (comma-separated, e.g. "tuna, mushrooms")
+        if let exclude = defaults.string(forKey: "excludeIngredientsPref"),
+           !exclude.trimmingCharacters(in: .whitespaces).isEmpty {
+            items.append(
+                URLQueryItem(
+                    name: "excludeIngredients",
+                    value: exclude
+                )
+            )
         }
 
         components.queryItems = items

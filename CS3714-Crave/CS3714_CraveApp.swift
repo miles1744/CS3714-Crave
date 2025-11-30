@@ -29,9 +29,10 @@ final class AppState: ObservableObject {
             // Define SwiftData schema
             let schema = Schema([
                 UserProfile.self,
-                SavedRecipe.self      // 👈 add this line
+                SavedRecipe.self,
+                ChefRecipe.self   // 👈 ADD THIS HERE
             ])
-            // In-memory store (DEV-FRIENDLY) to avoid disk/schema issues
+
             let config = ModelConfiguration(schema: schema,
                                             isStoredInMemoryOnly: true)
 
@@ -41,10 +42,11 @@ final class AppState: ObservableObject {
             fatalError("Failed to create ModelContainer: \(error)")
         }
 
-        // Use the container's mainContext for AuthViewModel
         authVM = AuthViewModel(context: container.mainContext)
     }
 }
+
+
 
 // Simple keyboard test view for debugging
 struct KeyboardTestView: View {
@@ -64,8 +66,6 @@ struct KeyboardTestView: View {
         .padding()
     }
 }
-
-
 
 @main
 struct MyApp: App {

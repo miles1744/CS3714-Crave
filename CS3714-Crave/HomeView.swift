@@ -12,7 +12,7 @@ struct HomeView: View {
     @EnvironmentObject var auth: AuthViewModel
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \SavedRecipe.title) private var savedRecipes: [SavedRecipe]
-
+    @Query(sort: \ChefRecipe.title) private var chefRecipes: [ChefRecipe]
     @State private var newName: String = ""
     @State private var selectedTab: Tab = .home
 
@@ -39,18 +39,17 @@ struct HomeView: View {
         NavigationStack {
             VStack(spacing: 12) {
 
-                // HEADER BAR
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         headerButton("Home", tab: .home)
-                        headerButton("Crave", tab: .crave)
 
                         if isChef {
-                            // Chef-only tabs
+                            // Chef-only tabs (no Crave)
                             headerButton("Add Recipe", tab: .addRecipe)
                             headerButton("My Recipes", tab: .myRecipes)
                         } else {
-                            // General user tabs
+                            // General user tabs (Crave + Saved + Preferences)
+                            headerButton("Crave", tab: .crave)
                             headerButton("Saved Recipes", tab: .saved)
                             headerButton("Preferences", tab: .preferences)
                         }
@@ -64,50 +63,33 @@ struct HomeView: View {
                 switch selectedTab {
                 case .home:
                     homeContent
-
+                    
                 case .crave:
                     CraveView()
                         .frame(maxWidth: .infinity,
                                maxHeight: .infinity,
                                alignment: .topLeading)
-
+                    
                 case .saved:
                     savedContent
-
+                    
                 case .preferences:
-                    VStack(spacing: 8) {
-                        Text("Preferences")
-                            .font(.title.bold())
-                        Text("Customize your experience: email type, dietary preferences, and more.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-
+                    FoodPreferencesView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 case .addRecipe:
-                    VStack(spacing: 8) {
-                        Text("Add Recipe")
-                            .font(.title.bold())
-                        Text("As a chef, you can create new recipes to share with users here.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-
+                    AddRecipeView()
+                        .frame(maxWidth: .infinity,
+                               maxHeight: .infinity,
+                               alignment: .top)
+                        .environmentObject(auth)   // passes AuthViewModel down
+                    
                 case .myRecipes:
-                    VStack(spacing: 8) {
-                        Text("My Recipes")
-                            .font(.title.bold())
-                        Text("Manage and edit all the recipes you’ve created.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    MyRecipesView()
+                        .frame(maxWidth: .infinity,
+                               maxHeight: .infinity,
+                               alignment: .top)
+                        .environmentObject(auth)
                 }
-
                 Spacer()
             }
             .padding()
@@ -119,19 +101,22 @@ struct HomeView: View {
     // MARK: - Saved Recipes Content
 
     private var savedContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        // Filter chef recipes to only the ones that are saved
+        let savedChefRecipes = chefRecipes.filter { $0.isSaved }
+
+        return VStack(alignment: .leading, spacing: 16) {
+            // 1) Spoonacular-saved recipes
             Text("Saved Recipes")
                 .font(.title.bold())
 
             if savedRecipes.isEmpty {
-                Text("You haven’t saved any recipes yet.")
+                Text("You haven’t saved any Spoonacular recipes yet.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
                 List {
                     ForEach(savedRecipes) { saved in
                         NavigationLink {
-                            // open full detail view with AI + instructions
                             RecipeDetailView(recipe: Recipe(from: saved))
                         } label: {
                             HStack(spacing: 12) {
@@ -166,7 +151,6 @@ struct HomeView: View {
                             }
                             .padding(.vertical, 4)
                         }
-                        // Swipe left to remove
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) {
                                 removeSaved(saved)
@@ -178,10 +162,53 @@ struct HomeView: View {
                 }
                 .listStyle(.plain)
             }
+
+            // 2) Saved chef recipes
+            Divider()
+
+            Text("Saved Chef Recipes")
+                .font(.title2.bold())
+
+            if savedChefRecipes.isEmpty {
+                Text("You haven’t saved any chef recipes yet.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                List {
+                    ForEach(savedChefRecipes) { recipe in
+                        NavigationLink {
+                            ChefRecipeDetailView(recipe: recipe)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(recipe.title)
+                                    .font(.headline)
+                                if !recipe.shortDescription.isEmpty {
+                                    Text(recipe.shortDescription)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                } else {
+                                    Text("By \(recipe.createdByName)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .swipeActions {
+                            Button(role: .destructive) {
+                                // unsave instead of delete the recipe itself
+                                recipe.isSaved = false
+                            } label: {
+                                Label("Unsave", systemImage: "bookmark.slash")
+                            }
+                        }
+                    }
+                }
+                .listStyle(.plain)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
-
     // MARK: - Helpers
 
     private func removeSaved(_ recipe: SavedRecipe) {

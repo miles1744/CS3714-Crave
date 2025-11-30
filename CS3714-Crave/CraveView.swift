@@ -10,6 +10,10 @@ struct CraveView: View {
     @StateObject private var vm = RecipeViewModel()
     @Environment(\.modelContext) private var modelContext
 
+    // All chef recipes (for the "Chef Recipes" section)
+    @Query(sort: \ChefRecipe.createdAt, order: .reverse)
+    private var chefRecipes: [ChefRecipe]
+
     @State private var aiPrompt: String = ""
     @State private var aiResult: String?
 
@@ -18,7 +22,9 @@ struct CraveView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
 
+                    // ---------------------------------------------------------
                     // MARK: - Spoonacular Search
+                    // ---------------------------------------------------------
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Search Recipes")
                             .font(.title2.bold())
@@ -51,26 +57,23 @@ struct CraveView: View {
 
                     Divider()
 
+                    // ---------------------------------------------------------
                     // MARK: - AI Recipe Lookup
+                    // ---------------------------------------------------------
                     VStack(alignment: .leading, spacing: 12) {
                         Text("AI Recipe Lookup")
                             .font(.title2.bold())
 
-                        Text("Ask AI to generate a recipe, meal idea, or ingredients list.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-
-                        TextField("Ask AI… e.g. “healthy chicken dinner”", text: $aiPrompt)
+                        TextField("Ask AI… e.g. 'healthy chicken dinner'", text: $aiPrompt)
                             .textFieldStyle(.roundedBorder)
 
                         Button("Generate with AI") {
                             Task {
-                                aiResult = nil
                                 aiResult = await generateAIRecipe(from: aiPrompt)
                             }
                         }
                         .buttonStyle(.borderedProminent)
-                        .disabled(aiPrompt.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .disabled(aiPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                         if let result = aiResult {
                             VStack(alignment: .leading, spacing: 8) {
@@ -78,7 +81,6 @@ struct CraveView: View {
                                     .font(.headline)
 
                                 Text(result)
-                                    .font(.body)
                                     .padding()
                                     .background(Color(.systemGray6))
                                     .cornerRadius(12)
@@ -88,7 +90,9 @@ struct CraveView: View {
 
                     Divider()
 
-                    // MARK: - Recipe Results
+                    // ---------------------------------------------------------
+                    // MARK: - Spoonacular Results
+                    // ---------------------------------------------------------
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Results")
                             .font(.title2.bold())
@@ -98,62 +102,103 @@ struct CraveView: View {
                                 .foregroundStyle(.secondary)
                         } else {
                             ForEach(vm.recipes) { recipe in
-                                NavigationLink {
-                                    RecipeDetailView(recipe: recipe)
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        if let urlString = recipe.image,
-                                           let url = URL(string: urlString) {
-                                            AsyncImage(url: url) { image in
-                                                image
-                                                    .resizable()
-                                                    .scaledToFill()
-                                            } placeholder: {
-                                                ProgressView()
-                                            }
-                                            .frame(width: 70, height: 70)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                HStack(spacing: 12) {
+                                    if let urlStr = recipe.image,
+                                       let url = URL(string: urlStr) {
+                                        AsyncImage(url: url) { image in
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                        } placeholder: {
+                                            ProgressView()
                                         }
-
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(recipe.title)
-                                                .font(.headline)
-
-                                            HStack(spacing: 8) {
-                                                if let minutes = recipe.readyInMinutes {
-                                                    Text("\(minutes) min")
-                                                }
-                                                if let servings = recipe.servings {
-                                                    Text("Serves \(servings)")
-                                                }
-                                            }
-                                            .font(.subheadline)
-                                            .foregroundStyle(.secondary)
-                                        }
-
-                                        Spacer()
-
-                                        Button {
-                                            save(recipe)
-                                        } label: {
-                                            Image(systemName: "bookmark.fill")
-                                                .foregroundColor(.blue)
-                                        }
-                                        .buttonStyle(.borderless)
+                                        .frame(width: 70, height: 70)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
                                     }
-                                    .padding(.vertical, 4)
-                                
-                            }
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(recipe.title)
+                                            .font(.headline)
+
+                                        HStack(spacing: 8) {
+                                            if let m = recipe.readyInMinutes {
+                                                Text("\(m) min")
+                                            }
+                                            if let s = recipe.servings {
+                                                Text("Serves \(s)")
+                                            }
+                                        }
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    Button {
+                                        save(recipe)
+                                    } label: {
+                                        Image(systemName: "bookmark.fill")
+                                            .foregroundColor(.blue)
+                                    }
+                                    .buttonStyle(.borderless)
+                                }
+                                .padding(.vertical, 4)
                             }
                         }
                     }
 
-                }
+                    Divider()
+
+                    // ---------------------------------------------------------
+                    // MARK: - Chef Recipes
+                    // ---------------------------------------------------------
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Chef Recipes")
+                            .font(.title2.bold())
+
+                        if chefRecipes.isEmpty {
+                            Text("No chef recipes available yet.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(chefRecipes) { recipe in
+                                HStack(alignment: .center, spacing: 12) {
+                                    NavigationLink {
+                                        ChefRecipeDetailView(recipe: recipe)
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(recipe.title)
+                                                .font(.headline)
+
+                                            if !recipe.shortDescription.isEmpty {
+                                                Text(recipe.shortDescription)
+                                                    .font(.subheadline)
+                                                    .foregroundStyle(.secondary)
+                                            } else {
+                                                Text("By \(recipe.createdByName)")
+                                                    .font(.subheadline)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+
+                                    Button {
+                                        recipe.isSaved.toggle()
+                                    } label: {
+                                        Image(systemName: recipe.isSaved ? "bookmark.fill" : "bookmark")
+                                    }
+                                    .buttonStyle(.borderless)
+                                }
+                                .padding(.vertical, 6)
+                            }
+                        }
+                    }
+
+                } // VStack
                 .padding()
-            }
+            } // ScrollView
             .navigationTitle("Crave")
             .task {
-                // Auto-load something on first open
                 if vm.recipes.isEmpty {
                     vm.query = "pasta"
                     await vm.search()
@@ -162,41 +207,33 @@ struct CraveView: View {
         }
     }
 
-    // MARK: - Saving
-
+    // MARK: - Save Spoonacular Recipe
     private func save(_ recipe: Recipe) {
-        let recipeID = recipe.id   // capture value first
+        let recipeID = recipe.id
 
-        // Avoid duplicates
         let descriptor = FetchDescriptor<SavedRecipe>(
-            predicate: #Predicate<SavedRecipe> { saved in
-                saved.id == recipeID
-            }
+            predicate: #Predicate { $0.id == recipeID }
         )
 
         if let existing = try? modelContext.fetch(descriptor),
-           existing.isEmpty == false {
-            // Already saved – nothing to do
-            return
+           !existing.isEmpty {
+            return   // already saved
         }
 
         let saved = SavedRecipe(from: recipe)
         modelContext.insert(saved)
-        // If you use persistent storage later, you can also: try? modelContext.save()
     }
-    
 
-    // MARK: - AI integration (Gemini)
-
-    private func generateAIRecipe(from prompt: String) async -> String {
+    // MARK: - AI logic
+    func generateAIRecipe(from prompt: String) async -> String {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            return "Please enter a prompt for the AI."
+            return "Please enter a prompt."
         }
 
         do {
             return try await GeminiAPI.shared.generateRecipe(
-                prompt: "Generate a condensed recipe idea for: \(trimmed)"
+                prompt: "Generate a detailed recipe for: \(trimmed)"
             )
         } catch {
             return "AI error: \(error.localizedDescription)"

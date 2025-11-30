@@ -27,8 +27,10 @@ final class AppState: ObservableObject {
     init() {
         do {
             // Define SwiftData schema
-            let schema = Schema([UserProfile.self])
-
+            let schema = Schema([
+                UserProfile.self,
+                SavedRecipe.self      // 👈 add this line
+            ])
             // In-memory store (DEV-FRIENDLY) to avoid disk/schema issues
             let config = ModelConfiguration(schema: schema,
                                             isStoredInMemoryOnly: true)

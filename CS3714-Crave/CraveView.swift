@@ -4,9 +4,11 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CraveView: View {
     @StateObject private var vm = RecipeViewModel()
+    @Environment(\.modelContext) private var modelContext
 
     @State private var aiPrompt: String = ""
     @State private var aiResult: String?
@@ -125,6 +127,16 @@ struct CraveView: View {
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                     }
+
+                                    Spacer()
+
+                                    Button {
+                                        save(recipe)
+                                    } label: {
+                                        Image(systemName: "bookmark.fill")
+                                            .foregroundColor(.blue)
+                                    }
+                                    .buttonStyle(.borderless)
                                 }
                                 .padding(.vertical, 4)
                             }
@@ -145,17 +157,37 @@ struct CraveView: View {
         }
     }
 
+    // MARK: - Saving
+
+    private func save(_ recipe: Recipe) {
+        // Avoid duplicates
+        let descriptor = FetchDescriptor<SavedRecipe>(
+            predicate: #Predicate { $0.id == recipe.id }
+        )
+
+        if let existing = try? modelContext.fetch(descriptor),
+           existing.isEmpty == false {
+            // already saved – you could show a toast later
+            return
+        }
+
+        let saved = SavedRecipe(from: recipe)
+        modelContext.insert(saved)
+        // If you ever switch off in-memory SwiftData, you can manually save here.
+        // try? modelContext.save()
+    }
+
     // MARK: - AI integration (Gemini)
-    func generateAIRecipe(from prompt: String) async -> String {
+
+    private func generateAIRecipe(from prompt: String) async -> String {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             return "Please enter a prompt for the AI."
         }
 
         do {
-            // Uses your GeminiAPI helper
             return try await GeminiAPI.shared.generateRecipe(
-                prompt: "Generate a detailed recipe for: \(trimmed)"
+                prompt: "Generate a condensed recipe idea for: \(trimmed)"
             )
         } catch {
             return "AI error: \(error.localizedDescription)"

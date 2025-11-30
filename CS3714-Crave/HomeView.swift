@@ -5,13 +5,16 @@
 //  Created by Brendan Michael Riordan on 11/9/25.
 //
 
+
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
     @EnvironmentObject var auth: AuthViewModel
-
+    @Query(sort: \SavedRecipe.title) private var savedRecipes: [SavedRecipe]
     @State private var newName: String = ""
     @State private var selectedTab: Tab = .home
+    @Environment(\.modelContext) private var modelContext
 
     enum Tab {
         case home
@@ -69,16 +72,59 @@ struct HomeView: View {
                            alignment: .topLeading)
 
             case .saved:
-                VStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Saved Recipes")
                         .font(.title.bold())
-                    Text("Your bookmarked recipes will appear here.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+
+                    if savedRecipes.isEmpty {
+                        Text("You haven’t saved any recipes yet.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        List {
+                            ForEach(savedRecipes) { recipe in
+                                HStack(spacing: 12) {
+                                    if let urlString = recipe.imageURL,
+                                       let url = URL(string: urlString) {
+                                        AsyncImage(url: url) { image in
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                        } placeholder: {
+                                            ProgressView()
+                                        }
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(recipe.title)
+                                            .font(.headline)
+
+                                        HStack(spacing: 8) {
+                                            if let minutes = recipe.readyInMinutes {
+                                                Text("\(minutes) min")
+                                            }
+                                            if let servings = recipe.servings {
+                                                Text("Serves \(servings)")
+                                            }
+                                        }
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .onDelete { indexSet in
+                                for index in indexSet {
+                                    modelContext.delete(savedRecipes[index])
+                                }
+                            }
+                        }
+                        .listStyle(.plain)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-
             case .preferences:
                 VStack(spacing: 8) {
                     Text("Preferences")

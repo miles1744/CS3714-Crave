@@ -62,15 +62,11 @@ struct HomeView: View {
                 homeContent
 
             case .crave:
-                VStack(spacing: 8) {
-                    Text("Crave")
-                        .font(.title.bold())
-                    Text("Browse and discover new dishes from chefs nearby.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                // 🔥 This is where your Spoonacular + AI CraveView lives
+                CraveView()
+                    .frame(maxWidth: .infinity,
+                           maxHeight: .infinity,
+                           alignment: .topLeading)
 
             case .saved:
                 VStack(spacing: 8) {

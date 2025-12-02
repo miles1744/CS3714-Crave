@@ -1,2 +1,3 @@
-GoogleService-info.plist
+GoogleService-Info.plist
 Secrets.env
+Secrets.swift

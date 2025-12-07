@@ -5,17 +5,19 @@
 
 import SwiftUI
 
+/// View for users to set dietary preferences, ingredient exclusions, and intolerances.
 struct FoodPreferencesView: View {
-    // Persisted values (UserDefaults via AppStorage)
+    // Persisted values using @AppStorage (backed by UserDefaults)
     @AppStorage("dietPref") private var dietPref: String = "None"
     @AppStorage("excludeIngredientsPref") private var excludePref: String = ""
     @AppStorage("intolerancesPref") private var intolerancesPref: String = ""
 
-    // Local UI state
+    // Local UI state variables (synced on appear)
     @State private var selectedDiet: String = "None"
     @State private var excludeIngredients: String = ""
     @State private var selectedIntolerances: Set<String> = []
 
+    // Available diet options for Picker
     private let diets = [
         "None",
         "Vegetarian",
@@ -25,6 +27,7 @@ struct FoodPreferencesView: View {
         "Ketogenic"
     ]
 
+    // Common food intolerance options (rendered as toggles)
     private let intoleranceOptions = [
         "Dairy", "Egg", "Gluten", "Peanut", "Seafood",
         "Sesame", "Shellfish", "Soy", "Sulfite",
@@ -33,6 +36,9 @@ struct FoodPreferencesView: View {
 
     var body: some View {
         Form {
+            // --------------------
+            // Diet preference
+            // --------------------
             Section("Diet") {
                 Picker("Diet", selection: $selectedDiet) {
                     ForEach(diets, id: \.self) { diet in
@@ -41,6 +47,9 @@ struct FoodPreferencesView: View {
                 }
             }
 
+            // --------------------
+            // Intolerances section
+            // --------------------
             Section("Intolerances") {
                 ForEach(intoleranceOptions, id: \.self) { option in
                     Toggle(isOn: bindingForIntolerance(option)) {
@@ -49,21 +58,27 @@ struct FoodPreferencesView: View {
                 }
             }
 
+            // --------------------
+            // Ingredient exclusions
+            // --------------------
             Section("Exclude Ingredients") {
                 TextField("e.g. tuna, mushrooms", text: $excludeIngredients)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+
                 Text("Separate with commas. These ingredients will be avoided in search results.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
         .navigationTitle("Preferences")
+
+        // Load saved preferences when view appears
         .onAppear {
-            // Sync UI from stored values
             selectedDiet = dietPref
             excludeIngredients = excludePref
 
+            // Parse intolerances CSV string into a set
             let parts = intolerancesPref
                 .split(separator: ",")
                 .map { $0.trimmingCharacters(in: .whitespaces) }
@@ -71,11 +86,13 @@ struct FoodPreferencesView: View {
 
             selectedIntolerances = Set(parts)
         }
-        
+
+        // Update stored diet preference when changed
         .onChange(of: selectedDiet) { oldValue, newValue in
             dietPref = newValue
         }
-        
+
+        // Update stored ingredient exclusions when changed
         .onChange(of: excludeIngredients) { oldValue, newValue in
             excludePref = newValue
         }
@@ -83,6 +100,7 @@ struct FoodPreferencesView: View {
 
     // MARK: - Helpers
 
+    /// Provides a toggle binding for a given intolerance option
     private func bindingForIntolerance(_ option: String) -> Binding<Bool> {
         Binding(
             get: { selectedIntolerances.contains(option) },
@@ -92,11 +110,12 @@ struct FoodPreferencesView: View {
                 } else {
                     selectedIntolerances.remove(option)
                 }
-                saveIntolerances()
+                saveIntolerances() // Update persistent storage
             }
         )
     }
 
+    /// Saves current intolerances set to AppStorage as a CSV string
     private func saveIntolerances() {
         intolerancesPref = selectedIntolerances
             .sorted()

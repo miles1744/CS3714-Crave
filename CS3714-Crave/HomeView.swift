@@ -8,14 +8,19 @@
 import SwiftUI
 import SwiftData
 
+/// Main entry point after login — renders different tabs based on user type (Chef or General User)
 struct HomeView: View {
-    @EnvironmentObject var auth: AuthViewModel
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var auth: AuthViewModel           // Access current user info
+    @Environment(\.modelContext) private var modelContext // SwiftData context for persistence
+
+    // Query saved Spoonacular recipes and Chef-created recipes
     @Query(sort: \SavedRecipe.title) private var savedRecipes: [SavedRecipe]
     @Query(sort: \ChefRecipe.title) private var chefRecipes: [ChefRecipe]
-    @State private var newName: String = ""
-    @State private var selectedTab: Tab = .home
 
+    @State private var newName: String = ""              // For updating display name
+    @State private var selectedTab: Tab = .home          // Current selected tab
+
+    /// Available tabs in the view
     enum Tab {
         case home
         case crave
@@ -25,12 +30,12 @@ struct HomeView: View {
         case myRecipes
     }
 
-    // Always use the *current* logged-in profile from AuthViewModel
+    /// Returns the current logged-in profile from auth
     private var profile: UserProfile? {
         auth.currentProfile
     }
 
-    // Chef vs general user (default to "General User" if no usertype yet)
+    /// Determines if the user is a Chef
     private var isChef: Bool {
         (profile?.userType ?? "General User") == "Chef"
     }
@@ -39,16 +44,17 @@ struct HomeView: View {
         NavigationStack {
             VStack(spacing: 12) {
 
+                // Top horizontal tab bar
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         headerButton("Home", tab: .home)
 
                         if isChef {
-                            // Chef-only tabs (no Crave)
+                            // Show Chef-only tabs
                             headerButton("Add Recipe", tab: .addRecipe)
                             headerButton("My Recipes", tab: .myRecipes)
                         } else {
-                            // General user tabs (Crave + Saved + Preferences)
+                            // Show General User tabs
                             headerButton("Crave", tab: .crave)
                             headerButton("Saved Recipes", tab: .saved)
                             headerButton("Preferences", tab: .preferences)
@@ -59,7 +65,7 @@ struct HomeView: View {
 
                 Divider()
 
-                // MAIN CONTENT AREA – changes by selectedTab
+                // Show tab content based on current tab selection
                 switch selectedTab {
                 case .home:
                     homeContent
@@ -77,12 +83,13 @@ struct HomeView: View {
                 case .preferences:
                     FoodPreferencesView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
                 case .addRecipe:
                     AddRecipeView()
                         .frame(maxWidth: .infinity,
                                maxHeight: .infinity,
                                alignment: .top)
-                        .environmentObject(auth)   // passes AuthViewModel down
+                        .environmentObject(auth)   // pass down auth info
                     
                 case .myRecipes:
                     MyRecipesView()
@@ -91,6 +98,7 @@ struct HomeView: View {
                                alignment: .top)
                         .environmentObject(auth)
                 }
+
                 Spacer()
             }
             .padding()
@@ -101,29 +109,28 @@ struct HomeView: View {
 
     // MARK: - Saved Recipes Content
 
-    
-
+    /// Displays both Spoonacular and Chef recipes that the user has saved/bookmarked
     private var savedContent: some View {
         let userEmail = auth.currentProfile?.email ?? ""
         
-        // ✅ Filter saved recipes to only this user's
+        // Filter saved Spoonacular recipes by logged-in user
         let userSavedRecipes = savedRecipes.filter { $0.savedByEmail == userEmail }
         
-        // Filter chef recipes to only the ones that are saved
+        // Filter chef recipes marked as saved
         let savedChefRecipes = chefRecipes.filter { $0.isSaved }
 
         return VStack(alignment: .leading, spacing: 16) {
-            // 1) Spoonacular-saved recipes
+            // --- Spoonacular Recipes ---
             Text("Saved Recipes")
                 .font(.title.bold())
 
-            if userSavedRecipes.isEmpty {  // ✅ CHANGED from savedRecipes
+            if userSavedRecipes.isEmpty {
                 Text("You haven't saved any Spoonacular recipes yet.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
                 List {
-                    ForEach(userSavedRecipes) { saved in  // ✅ CHANGED from savedRecipes
+                    ForEach(userSavedRecipes) { saved in
                         NavigationLink {
                             RecipeDetailView(recipe: Recipe(from: saved))
                         } label: {
@@ -159,6 +166,7 @@ struct HomeView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        // Swipe to delete saved recipe
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) {
                                 removeSaved(saved)
@@ -171,7 +179,7 @@ struct HomeView: View {
                 .listStyle(.plain)
             }
 
-            // 2) Saved chef recipes
+            // --- Chef Recipes ---
             Divider()
 
             Text("Saved Chef Recipes")
@@ -202,9 +210,9 @@ struct HomeView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        // Swipe to unsave the recipe (does not delete it)
                         .swipeActions {
                             Button(role: .destructive) {
-                                // unsave instead of delete the recipe itself
                                 recipe.isSaved = false
                             } label: {
                                 Label("Unsave", systemImage: "bookmark.slash")
@@ -217,14 +225,16 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
+
     // MARK: - Helpers
 
+    /// Deletes a saved Spoonacular recipe from local storage
     private func removeSaved(_ recipe: SavedRecipe) {
         modelContext.delete(recipe)
-        // If you later use persistent storage, you can also:
-        // try? modelContext.save()
+        // Note: add try? modelContext.save() if using persistent storage
     }
 
+    /// Reusable button for switching tabs in the horizontal header
     private func headerButton(_ title: String, tab: Tab) -> some View {
         Button {
             selectedTab = tab
@@ -242,6 +252,7 @@ struct HomeView: View {
         }
     }
 
+    /// Content for the Home tab (varies based on user type)
     private var homeContent: some View {
         VStack(spacing: 12) {
             if let p = profile {
@@ -296,10 +307,12 @@ struct HomeView: View {
                     .padding(.top, 8)
                 }
             } else {
+                // No profile yet
                 Text("No local profile found yet.")
                     .foregroundStyle(.secondary)
             }
 
+            // Sign out button
             Button("Sign Out") {
                 auth.signOut()
             }

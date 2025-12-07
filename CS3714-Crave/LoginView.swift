@@ -7,12 +7,17 @@
 
 import SwiftUI
 
+/// View that handles user login with email and password
 struct LoginView: View {
-    @EnvironmentObject var auth: AuthViewModel
-    @State private var email = ""
-    @State private var password = ""
+    @EnvironmentObject var auth: AuthViewModel  // Access the shared authentication state
+
+    @State private var email = ""               // Email input
+    @State private var password = ""            // Password input
+
+    // Field focus state for keyboard navigation
     @FocusState private var focused: Field?
 
+    // Enum to track which field is currently focused
     enum Field {
         case email
         case password
@@ -20,34 +25,39 @@ struct LoginView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            // App title
             Text("Welcome Back")
                 .font(.largeTitle.bold())
 
+            // Email input field
             TextField("Email", text: $email)
                 .textInputAutocapitalization(.never)
                 .keyboardType(.emailAddress)
                 .autocorrectionDisabled()
                 .textFieldStyle(.roundedBorder)
-                .focused($focused, equals: .email)
-                .submitLabel(.next)
+                .focused($focused, equals: .email)   // Autofocus support
+                .submitLabel(.next)                  // "Next" on keyboard
 
+            // Password input field
             SecureField("Password", text: $password)
                 .textFieldStyle(.roundedBorder)
                 .focused($focused, equals: .password)
-                .submitLabel(.go)
+                .submitLabel(.go)                    // "Go" on keyboard
 
+            // Log In button
             Button {
                 Task { await auth.signIn(email: email, password: password) }
             } label: {
                 HStack {
-                    if auth.loading { ProgressView() }
+                    if auth.loading { ProgressView() }  // Show loading spinner if authenticating
                     Text("Log In")
                 }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(email.isEmpty || password.count < 6)
+            .disabled(email.isEmpty || password.count < 6)  // Disable if inputs are invalid
 
+            // Display authentication error message if one exists
             if let err = auth.errorMessage {
                 Text(err)
                     .foregroundStyle(.red)
@@ -58,11 +68,13 @@ struct LoginView: View {
             Spacer()
         }
         .padding()
+
         // 👉 Force initial focus on email when the screen appears
         .onAppear {
             focused = .email
         }
-        // Handle return key
+
+        // Handle keyboard return key based on focused field
         .onSubmit {
             switch focused {
             case .email:

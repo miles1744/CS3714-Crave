@@ -6,24 +6,30 @@
 import SwiftUI
 import SwiftData
 
+/// View that displays the current chef user's own created recipes
 struct MyRecipesView: View {
-    @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var auth: AuthViewModel
+    @Environment(\.modelContext) private var modelContext    // SwiftData model context
+    @EnvironmentObject var auth: AuthViewModel               // Access current user profile
 
-    // We’ll manually filter by current chef email in body,
-    // since @Query predicate capturing can be a bit strict.
+    // Fetch all ChefRecipe entries; we’ll filter manually by creator email
     @Query(sort: \ChefRecipe.createdAt, order: .reverse)
     private var allChefRecipes: [ChefRecipe]
 
     var body: some View {
+        // Get current user's email
         let myEmail = auth.currentProfile?.email ?? ""
+
+        // Filter only recipes created by this user
         let myRecipes = allChefRecipes.filter { $0.createdByEmail == myEmail }
 
         return Group {
+            // No profile loaded (shouldn't happen if Auth is working)
             if myEmail.isEmpty {
                 Text("No profile loaded.")
                     .foregroundStyle(.secondary)
-            } else if myRecipes.isEmpty {
+            }
+            // No recipes created yet
+            else if myRecipes.isEmpty {
                 VStack(spacing: 8) {
                     Text("No Recipes Yet")
                         .font(.title.bold())
@@ -33,7 +39,9 @@ struct MyRecipesView: View {
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            } else {
+            }
+            // Display list of user's recipes
+            else {
                 List {
                     ForEach(myRecipes) { recipe in
                         NavigationLink {
@@ -42,6 +50,8 @@ struct MyRecipesView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(recipe.title)
                                     .font(.headline)
+
+                                // Show short description or fallback to creator name
                                 if !recipe.shortDescription.isEmpty {
                                     Text(recipe.shortDescription)
                                         .font(.subheadline)
@@ -54,6 +64,7 @@ struct MyRecipesView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        // Swipe-to-delete action
                         .swipeActions {
                             Button(role: .destructive) {
                                 delete(recipe)
@@ -69,6 +80,7 @@ struct MyRecipesView: View {
         .navigationTitle("My Recipes")
     }
 
+    /// Deletes a recipe from SwiftData
     private func delete(_ recipe: ChefRecipe) {
         modelContext.delete(recipe)
     }

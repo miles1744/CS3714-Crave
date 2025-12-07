@@ -7,17 +7,20 @@
 
 import SwiftUI
 
+/// View to display details of a Spoonacular recipe, including AI summary generation
 struct RecipeDetailView: View {
-    let recipe: Recipe
+    let recipe: Recipe  // The recipe to display
 
-    @State private var aiSummary: String?
-    @State private var isSummarizing = false
+    @State private var aiSummary: String?       // AI-generated summary text
+    @State private var isSummarizing = false    // Whether AI is generating a summary
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
 
-                // Image
+                // ----------------------------
+                // IMAGE SECTION
+                // ----------------------------
                 if let img = recipe.image,
                    let url = URL(string: img) {
                     AsyncImage(url: url) { image in
@@ -32,7 +35,9 @@ struct RecipeDetailView: View {
                     .cornerRadius(16)
                 }
 
-                // Title + meta
+                // ----------------------------
+                // TITLE & METADATA
+                // ----------------------------
                 Text(recipe.title)
                     .font(.title.bold())
 
@@ -49,7 +54,10 @@ struct RecipeDetailView: View {
 
                 Divider()
 
-                // Decide what base text we have (instructions or summary)
+                // ----------------------------
+                // INSTRUCTIONS TEXT FALLBACK
+                // ----------------------------
+                // Use instructions if available, fallback to summary, or nil
                 let instructionsText: String? = {
                     if let instructions = recipe.instructions,
                        !instructions.isEmpty {
@@ -61,15 +69,20 @@ struct RecipeDetailView: View {
                     }
                 }()
 
-                // HOW TO MAKE IT
+                // ----------------------------
+                // HOW TO MAKE IT SECTION
+                // ----------------------------
                 Text("How to Make It")
                     .font(.headline)
 
                 if let baseText = instructionsText {
+                    // Show raw instructions/summary
                     Text(baseText)
                         .font(.body)
 
-                    // MARK: - AI Summary
+                    // ----------------------------
+                    // AI SUMMARY SECTION
+                    // ----------------------------
                     VStack(alignment: .leading, spacing: 8) {
                         Button {
                             Task {
@@ -89,6 +102,7 @@ struct RecipeDetailView: View {
                         }
                         .buttonStyle(.borderedProminent)
 
+                        // Display AI summary result
                         if let summary = aiSummary {
                             Text("AI Summary")
                                 .font(.headline)
@@ -104,11 +118,14 @@ struct RecipeDetailView: View {
                     .padding(.top, 8)
 
                 } else {
+                    // No instructions or summary available
                     Text("Instructions are not available for this recipe.")
                         .foregroundStyle(.secondary)
                 }
 
-                // Optional: link to original
+                // ----------------------------
+                // EXTERNAL RECIPE LINK
+                // ----------------------------
                 if let urlString = recipe.sourceUrl,
                    let url = URL(string: urlString) {
                     Divider()
@@ -122,7 +139,11 @@ struct RecipeDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // Quick & dirty HTML stripper for Spoonacular text
+    // --------------------------------------------------
+    // MARK: - HTML Stripping Utility for Instructions
+    // --------------------------------------------------
+
+    /// Removes basic HTML tags and entities from a Spoonacular recipe string
     private func stripHTML(_ html: String) -> String {
         html
             .replacingOccurrences(of: "<br>", with: "\n")
@@ -135,7 +156,11 @@ struct RecipeDetailView: View {
             .replacingOccurrences(of: "&amp;", with: "&")
     }
 
-    // Use Gemini to create a condensed summary
+    // --------------------------------------------------
+    // MARK: - Gemini AI Summary Generator
+    // --------------------------------------------------
+
+    /// Sends the recipe text to Gemini for a condensed bullet-point summary
     private func summarizeWithAI(from text: String) async -> String {
         do {
             let prompt = """

@@ -8,14 +8,15 @@
 import Foundation
 import SwiftData
 
-//class for User Profiles.
+/// SwiftData model class for storing user profiles locally
 @Model
 final class UserProfile {
-    @Attribute(.unique) var uid: String
-    var email: String
-    var displayName: String?
-    var userType: String          // "General User" or "Chef"
+    @Attribute(.unique) var uid: String     // Firebase UID (unique per user)
+    var email: String                       // User's email address
+    var displayName: String?                // Optional display name (can be edited)
+    var userType: String                    // Either "General User" or "Chef"
 
+    /// Initializer for UserProfile model
     init(
         uid: String,
         email: String,
@@ -29,10 +30,10 @@ final class UserProfile {
     }
 }
 
-// struct for sending user profile to firebase
+/// Codable struct used to send/receive user profile data to/from Firestore
 struct FirestoreUser: Codable {
-    let uid: String
-    let email: String
-    let displayName: String?
-    let userType: String?
+    let uid: String               // Firebase UID
+    let email: String             // User's email
+    let displayName: String?      // Optional name
+    let userType: String?         // "General User" or "Chef"
 }

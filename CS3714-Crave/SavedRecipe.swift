@@ -6,20 +6,23 @@
 import Foundation
 import SwiftData
 
+/// SwiftData model for a recipe that a user has saved (bookmarked)
 @Model
 class SavedRecipe {
-    @Attribute(.unique) var id: Int
-    var title: String
-    var imageURL: String?
-    var readyInMinutes: Int?
-    var servings: Int?
+    @Attribute(.unique) var id: Int             // Unique recipe ID (same as Spoonacular)
+    var title: String                           // Recipe title
+    var imageURL: String?                       // Optional image URL
+    var readyInMinutes: Int?                    // Optional prep time
+    var servings: Int?                          // Optional servings count
 
-    // New fields so detail view works for saved recipes too
-    var summary: String?
-    var instructions: String?
-    var sourceUrl: String?
-    var savedByEmail: String
+    // Additional fields to allow saved recipes to support full detail view
+    var summary: String?                        // Optional HTML summary
+    var instructions: String?                   // Optional HTML instructions
+    var sourceUrl: String?                      // Optional link to original source
 
+    var savedByEmail: String                    // Email of the user who saved the recipe
+
+    /// Designated initializer for saved recipe
     init(
         id: Int,
         title: String,
@@ -42,6 +45,7 @@ class SavedRecipe {
         self.savedByEmail = savedByEmail
     }
 
+    /// Convenience initializer to convert a `Recipe` into a `SavedRecipe`
     convenience init(from recipe: Recipe, savedByEmail: String) {
         self.init(
             id: recipe.id,

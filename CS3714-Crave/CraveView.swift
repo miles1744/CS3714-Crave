@@ -6,18 +6,19 @@
 import SwiftUI
 import SwiftData
 
+/// Main discovery view of the app — supports AI search, Spoonacular search, and saved chef recipes.
 struct CraveView: View {
     
-    @StateObject private var vm = RecipeViewModel()
-    @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var auth: AuthViewModel
+    @StateObject private var vm = RecipeViewModel() // Spoonacular search logic
+    @Environment(\.modelContext) private var modelContext // SwiftData context
+    @EnvironmentObject var auth: AuthViewModel      // Firebase auth + current user
 
-    // All chef recipes (for the "Chef Recipes" section)
+    // All chef-created recipes, sorted from newest to oldest
     @Query(sort: \ChefRecipe.createdAt, order: .reverse)
     private var chefRecipes: [ChefRecipe]
 
-    @State private var aiPrompt: String = ""
-    @State private var aiResult: String?
+    @State private var aiPrompt: String = ""     // Input prompt for AI recipe generation
+    @State private var aiResult: String?         // AI response text
 
     var body: some View {
         NavigationStack {
@@ -32,24 +33,28 @@ struct CraveView: View {
                             .font(.title2.bold())
 
                         HStack {
+                            // Search bar for Spoonacular
                             TextField("e.g. pasta, burgers, vegan...", text: $vm.query)
                                 .textFieldStyle(.roundedBorder)
                                 .submitLabel(.search)
                                 .onSubmit {
-                                    Task { await vm.search() }
+                                    Task { await vm.search() } // Trigger search
                                 }
 
+                            // Manual Go button
                             Button("Go") {
                                 Task { await vm.search() }
                             }
                             .buttonStyle(.borderedProminent)
                         }
 
+                        // Show loading state
                         if vm.isLoading {
                             ProgressView("Finding recipes...")
                                 .padding(.top, 4)
                         }
 
+                        // Show error message if API call fails
                         if let error = vm.errorMessage {
                             Text(error)
                                 .foregroundColor(.red)
@@ -66,9 +71,11 @@ struct CraveView: View {
                         Text("AI Recipe Lookup")
                             .font(.title2.bold())
 
+                        // AI prompt input field
                         TextField("Ask AI… e.g. 'healthy chicken dinner'", text: $aiPrompt)
                             .textFieldStyle(.roundedBorder)
 
+                        // Button to trigger AI recipe generation
                         Button("Generate with AI") {
                             Task {
                                 aiResult = await generateAIRecipe(from: aiPrompt)
@@ -77,6 +84,7 @@ struct CraveView: View {
                         .buttonStyle(.borderedProminent)
                         .disabled(aiPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
+                        // Display AI result
                         if let result = aiResult {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("AI Result")
@@ -100,11 +108,14 @@ struct CraveView: View {
                             .font(.title2.bold())
 
                         if vm.recipes.isEmpty {
+                            // Empty state before search
                             Text("Search for something above to see recipes.")
                                 .foregroundStyle(.secondary)
                         } else {
+                            // List of recipes from Spoonacular API
                             ForEach(vm.recipes) { recipe in
                                 HStack(spacing: 12) {
+                                    // Thumbnail image
                                     if let urlStr = recipe.image,
                                        let url = URL(string: urlStr) {
                                         AsyncImage(url: url) { image in
@@ -118,6 +129,7 @@ struct CraveView: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                     }
 
+                                    // Title + metadata
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(recipe.title)
                                             .font(.headline)
@@ -136,6 +148,7 @@ struct CraveView: View {
 
                                     Spacer()
 
+                                    // Bookmark button to save the recipe locally
                                     Button {
                                         save(recipe)
                                     } label: {
@@ -159,11 +172,14 @@ struct CraveView: View {
                             .font(.title2.bold())
 
                         if chefRecipes.isEmpty {
+                            // Empty state for chef recipes
                             Text("No chef recipes available yet.")
                                 .foregroundStyle(.secondary)
                         } else {
+                            // List of recipes created by local chefs
                             ForEach(chefRecipes) { recipe in
                                 HStack(alignment: .center, spacing: 12) {
+                                    // Navigate to full recipe detail
                                     NavigationLink {
                                         ChefRecipeDetailView(recipe: recipe)
                                     } label: {
@@ -184,6 +200,7 @@ struct CraveView: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     }
 
+                                    // Bookmark toggle
                                     Button {
                                         recipe.isSaved.toggle()
                                     } label: {
@@ -201,6 +218,7 @@ struct CraveView: View {
             } // ScrollView
             .navigationTitle("Crave")
             .task {
+                // Perform an initial search on first load
                 if vm.recipes.isEmpty {
                     vm.query = "pasta"
                     await vm.search()
@@ -210,25 +228,33 @@ struct CraveView: View {
     }
 
     // MARK: - Save Spoonacular Recipe
+
+    /// Saves a Spoonacular recipe to local storage if not already saved
     private func save(_ recipe: Recipe) {
         guard let userEmail = auth.currentProfile?.email else { return }
         let recipeID = recipe.id
 
+        // Check if the recipe is already saved for this user
         let descriptor = FetchDescriptor<SavedRecipe>(
-                predicate: #Predicate { saved in
-                    saved.id == recipeID && saved.savedByEmail == userEmail
-                }
-            )
+            predicate: #Predicate { saved in
+                saved.id == recipeID && saved.savedByEmail == userEmail
+            }
+        )
 
+        // Skip saving if already exists
         if let existing = try? modelContext.fetch(descriptor),
            !existing.isEmpty {
-            return   // already saved
+            return
         }
 
+        // Create and save a new SavedRecipe object
         let saved = SavedRecipe(from: recipe, savedByEmail: userEmail)
-            modelContext.insert(saved)    }
+        modelContext.insert(saved)
+    }
 
     // MARK: - AI logic
+
+    /// Uses Gemini API to generate a recipe from a free-text prompt
     func generateAIRecipe(from prompt: String) async -> String {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {

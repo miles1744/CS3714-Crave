@@ -18,6 +18,7 @@ class SavedRecipe {
     var summary: String?
     var instructions: String?
     var sourceUrl: String?
+    var savedByEmail: String
 
     init(
         id: Int,
@@ -27,7 +28,8 @@ class SavedRecipe {
         servings: Int? = nil,
         summary: String? = nil,
         instructions: String? = nil,
-        sourceUrl: String? = nil
+        sourceUrl: String? = nil,
+        savedByEmail: String
     ) {
         self.id = id
         self.title = title
@@ -37,9 +39,10 @@ class SavedRecipe {
         self.summary = summary
         self.instructions = instructions
         self.sourceUrl = sourceUrl
+        self.savedByEmail = savedByEmail
     }
 
-    convenience init(from recipe: Recipe) {
+    convenience init(from recipe: Recipe, savedByEmail: String) {
         self.init(
             id: recipe.id,
             title: recipe.title,
@@ -48,7 +51,8 @@ class SavedRecipe {
             servings: recipe.servings,
             summary: recipe.summary,
             instructions: recipe.instructions,
-            sourceUrl: recipe.sourceUrl
+            sourceUrl: recipe.sourceUrl,
+            savedByEmail: savedByEmail
         )
     }
 }

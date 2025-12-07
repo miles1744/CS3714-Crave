@@ -66,6 +66,7 @@ struct HomeView: View {
                     
                 case .crave:
                     CraveView()
+                        .environmentObject(auth)
                         .frame(maxWidth: .infinity,
                                maxHeight: .infinity,
                                alignment: .topLeading)
@@ -100,7 +101,14 @@ struct HomeView: View {
 
     // MARK: - Saved Recipes Content
 
+    
+
     private var savedContent: some View {
+        let userEmail = auth.currentProfile?.email ?? ""
+        
+        // ✅ Filter saved recipes to only this user's
+        let userSavedRecipes = savedRecipes.filter { $0.savedByEmail == userEmail }
+        
         // Filter chef recipes to only the ones that are saved
         let savedChefRecipes = chefRecipes.filter { $0.isSaved }
 
@@ -109,13 +117,13 @@ struct HomeView: View {
             Text("Saved Recipes")
                 .font(.title.bold())
 
-            if savedRecipes.isEmpty {
-                Text("You haven’t saved any Spoonacular recipes yet.")
+            if userSavedRecipes.isEmpty {  // ✅ CHANGED from savedRecipes
+                Text("You haven't saved any Spoonacular recipes yet.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
                 List {
-                    ForEach(savedRecipes) { saved in
+                    ForEach(userSavedRecipes) { saved in  // ✅ CHANGED from savedRecipes
                         NavigationLink {
                             RecipeDetailView(recipe: Recipe(from: saved))
                         } label: {
@@ -170,7 +178,7 @@ struct HomeView: View {
                 .font(.title2.bold())
 
             if savedChefRecipes.isEmpty {
-                Text("You haven’t saved any chef recipes yet.")
+                Text("You haven't saved any chef recipes yet.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {

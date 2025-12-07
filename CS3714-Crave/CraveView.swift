@@ -7,8 +7,10 @@ import SwiftUI
 import SwiftData
 
 struct CraveView: View {
+    
     @StateObject private var vm = RecipeViewModel()
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var auth: AuthViewModel
 
     // All chef recipes (for the "Chef Recipes" section)
     @Query(sort: \ChefRecipe.createdAt, order: .reverse)
@@ -209,20 +211,22 @@ struct CraveView: View {
 
     // MARK: - Save Spoonacular Recipe
     private func save(_ recipe: Recipe) {
+        guard let userEmail = auth.currentProfile?.email else { return }
         let recipeID = recipe.id
 
         let descriptor = FetchDescriptor<SavedRecipe>(
-            predicate: #Predicate { $0.id == recipeID }
-        )
+                predicate: #Predicate { saved in
+                    saved.id == recipeID && saved.savedByEmail == userEmail
+                }
+            )
 
         if let existing = try? modelContext.fetch(descriptor),
            !existing.isEmpty {
             return   // already saved
         }
 
-        let saved = SavedRecipe(from: recipe)
-        modelContext.insert(saved)
-    }
+        let saved = SavedRecipe(from: recipe, savedByEmail: userEmail)
+            modelContext.insert(saved)    }
 
     // MARK: - AI logic
     func generateAIRecipe(from prompt: String) async -> String {

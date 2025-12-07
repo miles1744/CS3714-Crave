@@ -6,3 +6,6 @@ Crave allows users to either login as a user or as a chef and if they are a Chef
 The main feature that our application has is the AI feature that allows users to search and our appliction uses AI to find the best recipes for them based on their prompt.
 
 Some of the known issues include not being able to unfavoirte recipes from the Crave tab but you can delete them by swiping right on the saved recipes tab.
+
+To run everything you will need to add the Secrets.swift, Secrets.env, and GoogleService-Info file.
+They are not in the readme due to GitGuardian issue but are shared in a google doc and a file for the GoogleService-Info.

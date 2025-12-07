@@ -59,7 +59,7 @@ struct SpoonacularAPI {
             items.append(URLQueryItem(name: "query", value: q))
         }
 
-        // 🔥 Apply user preferences saved via AppStorage (UserDefaults)
+        // Apply user preferences saved via AppStorage (UserDefaults)
         let defaults = UserDefaults.standard
 
         // --- Diet preference ---
@@ -74,13 +74,13 @@ struct SpoonacularAPI {
             )
         }
 
-        // --- Intolerances preference (comma‑separated list) ---
+        // Intolerances preference
         if let intolerances = defaults.string(forKey: "intolerancesPref"),
            !intolerances.trimmingCharacters(in: .whitespaces).isEmpty {
             items.append(URLQueryItem(name: "intolerances", value: intolerances))
         }
 
-        // --- Excluded ingredients ---
+        // Excluded ingredients
         if let exclude = defaults.string(forKey: "excludeIngredientsPref"),
            !exclude.trimmingCharacters(in: .whitespaces).isEmpty {
             items.append(URLQueryItem(name: "excludeIngredients", value: exclude))

@@ -11,6 +11,6 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         // Show the authentication gate, which decides whether to show login or home
-        AuthGateView()   // your real app root view
+        AuthGateView()   
     }
 }

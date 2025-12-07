@@ -17,7 +17,7 @@ struct SignUpView: View {
     @State private var password = ""             // Required password
 
     // Default role for new user; either "General User" or "Chef"
-    @State private var userType = "General User"   // 👈 internal value
+    @State private var userType = "General User"   //internal value
 
     var body: some View {
         VStack(spacing: 16) {
@@ -25,7 +25,7 @@ struct SignUpView: View {
             Text("Create Account")
                 .font(.largeTitle.bold())
 
-            // Display name input (optional)
+            // Display name input
             TextField("Display Name (optional)", text: $displayName)
                 .textFieldStyle(.roundedBorder)
                 .autocapitalization(.none)
@@ -41,8 +41,8 @@ struct SignUpView: View {
             SecureField("Password (min 6)", text: $password)
                 .textFieldStyle(.roundedBorder)
 
-            // Role picker (Segmented Control for General User vs Chef)
-            // ✅ Use labels, but tags must match backend-friendly values
+            // Role picker 
+            // Use labels, but tags must match backend-friendly values
             Picker("Select Account Type", selection: $userType) {
                 Text("General User").tag("General User")
                 Text("Chef").tag("Chef")

@@ -33,7 +33,7 @@ final class AppState: ObservableObject {
             let schema = Schema([
                 UserProfile.self,
                 SavedRecipe.self,
-                ChefRecipe.self   // 👈 ADD THIS HERE
+                ChefRecipe.self
             ])
 
             // Create in-memory-only data configuration for temporary storage
@@ -83,11 +83,9 @@ struct MyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // 👉 FIRST: test keyboard with this.
-            // Comment this out *after* you verify typing works here.
-            // KeyboardTestView()
+            
 
-            // 👉 When keyboard works in KeyboardTestView, switch to this:
+            
             AuthGateView()
                 .environmentObject(appState.authVM)       // Inject AuthViewModel
                 .modelContainer(appState.container)       // Inject SwiftData container

@@ -36,7 +36,7 @@ struct GeminiAPI {
             )
         }
         
-        // 🟦 NEW: Condensed Response System Prompt
+        
         let systemPrompt = """
         You are an AI that ALWAYS returns short, condensed recipe responses.
         Requirements:

@@ -257,7 +257,7 @@ struct HomeView: View {
         VStack(spacing: 12) {
             if let p = profile {
                 if isChef {
-                    // 👨‍🍳 CHEF HOME
+                    //chef home page
                     Text("Welcome, Chef \(p.displayName ?? p.email)")
                         .font(.title.bold())
                         .multilineTextAlignment(.center)
@@ -287,7 +287,7 @@ struct HomeView: View {
                     .padding(.top, 8)
 
                 } else {
-                    // 👤 GENERAL USER HOME
+                    //general user home page
                     Text("Signed In")
                         .font(.title.bold())
 

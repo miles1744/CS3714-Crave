@@ -69,7 +69,7 @@ struct LoginView: View {
         }
         .padding()
 
-        // 👉 Force initial focus on email when the screen appears
+        // cursor automatically on email
         .onAppear {
             focused = .email
         }

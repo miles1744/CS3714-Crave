@@ -142,7 +142,7 @@ final class AuthViewModel: ObservableObject {
             if let existing = try? context.fetch(descriptor).first {
                 existing.email = email
                 existing.displayName = name
-                existing.userType = userType          // 👈 updating SwiftData userType
+                existing.userType = userType          // updating SwiftData userType
                 profile = existing
             } else {
                 // Otherwise create and insert a new SwiftData profile
@@ -150,7 +150,7 @@ final class AuthViewModel: ObservableObject {
                     uid: uid,
                     email: email,
                     displayName: name,
-                    userType: userType                 // 👈 assigning initial userType
+                    userType: userType                 //assigning initial userType
                 )
                 context.insert(newProfile)
                 profile = newProfile

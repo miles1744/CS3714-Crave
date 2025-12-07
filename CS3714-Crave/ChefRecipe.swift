@@ -11,7 +11,7 @@ class ChefRecipe {
     // Short, optional description of the recipe
     var shortDescription: String
 
-    // Ingredients list as a plain string (e.g. one per line or bullets)
+    // Ingredients list as a plain string
     var ingredients: String
 
     // Step-by-step instructions for preparation
@@ -26,7 +26,7 @@ class ChefRecipe {
     // Timestamp of when the recipe was created
     var createdAt: Date
 
-    // 👇 NEW: whether a general user has saved/bookmarked this recipe
+    //whether a general user has saved/bookmarked this recipe
     var isSaved: Bool
 
     /// Initializer for creating a new `ChefRecipe` instance

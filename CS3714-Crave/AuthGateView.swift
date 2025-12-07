@@ -19,7 +19,7 @@ struct AuthGateView: View {
             if auth.isAuthenticated {
                 // ...and the user profile has been loaded, show the HomeView
                 if auth.currentProfile != nil {
-                    HomeView()   // ✅ correct
+                    HomeView()  
                 } else {
                     // Otherwise, show a loading spinner while profile is loading
                     ProgressView("Loading profile...")

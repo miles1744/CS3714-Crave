@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+//class for User Profiles.
 @Model
 final class UserProfile {
     @Attribute(.unique) var uid: String
@@ -28,7 +29,7 @@ final class UserProfile {
     }
 }
 
-// Optional mirror of Firestore data
+// struct for sending user profile to firebase
 struct FirestoreUser: Codable {
     let uid: String
     let email: String

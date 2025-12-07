@@ -12,7 +12,7 @@ struct SignUpView: View {
     @State private var displayName = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var userType = "user"   // 👈 internal value
+    @State private var userType = "General User"   // 👈 internal value
 
     var body: some View {
         VStack(spacing: 16) {
@@ -34,8 +34,8 @@ struct SignUpView: View {
 
             // ✅ Use labels, but tags are "user" / "chef"
             Picker("Select Account Type", selection: $userType) {
-                Text("General User").tag("user")
-                Text("Chef").tag("chef")
+                Text("General User").tag("General User")
+                Text("Chef").tag("Chef")
             }
             .pickerStyle(SegmentedPickerStyle())
 
